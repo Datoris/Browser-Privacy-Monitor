@@ -20,5 +20,13 @@ Proposed blueprint, subject to change depending of user feedback, defines follow
 ## Installing
 
 ## Building
+Install dependencies  
+`npm i`
+
+Start development mode and watch files for changes  
+`npm run dev`
+
+Build for production  
+`npm run build`
 
 ## Bug reports, feature requests, contributing
