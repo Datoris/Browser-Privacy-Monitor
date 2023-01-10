@@ -11,7 +11,15 @@ td {
   border: 1px solid #afafaf;
 }
 
+a,
 caption {
-  padding-bottom: .5em;
+  margin-bottom: .5em;
+}
+
+a {
+  display: block;
+}
+
+caption {
   text-align: left;
 }

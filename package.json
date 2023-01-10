@@ -21,6 +21,7 @@
     "webpack-cli": "^5.0.0"
   },
   "dependencies": {
+    "d3-dsv": "^3.0.1",
     "lodash.sortby": "^4.7.0",
     "vue": "^2.7.14"
   }

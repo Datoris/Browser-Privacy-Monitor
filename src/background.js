@@ -1,13 +1,3 @@
-// chrome.action.onClicked.addListener(async () => {
-//   const [indexTab] = await chrome.tabs.query({ url: `chrome-extension://${chrome.runtime.id}/index.html` });
-//   if (indexTab) {
-//     chrome.windows.update(indexTab.windowId, { focused: true });
-//     chrome.tabs.update(indexTab.id, { active: true });
-//   } else {
-//     chrome.tabs.create({ url: "index.html" });
-//   }
-// });
-
 async function getDomain(hostname, tabId) {
   return chrome.scripting.executeScript({
     target: { tabId },
@@ -41,6 +31,8 @@ async function getCookiesSubprocedure(urls, domain) {
 }
 
 let allCookies, firstPartyCookies, thirdPartyCookies;
+let reports = [];
+
 async function getCookies(tabId, domain) {
   if (domain) {
     const { result } = (await chrome.scripting.executeScript({
@@ -56,7 +48,10 @@ async function getCookies(tabId, domain) {
     firstPartyCookies = await getCookiesSubprocedure(uniqueUrls, domain);
     thirdPartyCookies = allCookies.filter(({ domain }) => !firstPartyCookies.map(({ domain }) => domain).includes(domain));
     chrome.action.setBadgeText({ text: `${allCookies.length}` });
-  } else chrome.action.setBadgeText({ text: "" });
+  } else {
+    chrome.action.setBadgeText({ text: "" });
+    allCookies = firstPartyCookies = thirdPartyCookies = undefined;
+  }
 }
 
 chrome.windows.onFocusChanged.addListener(async () => {
@@ -75,6 +70,12 @@ chrome.tabs.onUpdated.addListener(async (tabId) => {
 
 chrome.runtime.onMessage.addListener(({ message, payload }, sender, sendResponse) => {
   if (message === "popup init") {
-    sendResponse(thirdPartyCookies);
+    sendResponse([allCookies, thirdPartyCookies]);
+  }
+  if (message === "index init") {
+    sendResponse(reports);
+  }
+  if (message === "store reports") {
+    reports = payload;
   }
 });
