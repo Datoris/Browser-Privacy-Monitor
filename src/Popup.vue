@@ -47,17 +47,17 @@
 import sortBy from "lodash.sortby";
 
 function sourceFieldToReportField ({ field: { aggregate, dataType, id, format, formula, name, sort }, chartColumn }, position) {
-	return {
-		aggregate: null,
-		chartColumn,
-		dataType: "TEXT",
-		fieldId: id,
-		format: null,
-		formula,
-		name,
-		position,
-		sort
-	}
+  return {
+    aggregate: null,
+    chartColumn,
+    dataType: "TEXT",
+    fieldId: id,
+    format: null,
+    formula,
+    name,
+    position,
+    sort
+  }
 }
 
 export default {
