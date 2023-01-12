@@ -1,3 +1,4 @@
+const webpack = require("webpack");
 const TerserPlugin = require("terser-webpack-plugin");
 const CopyPlugin = require("copy-webpack-plugin");
 const { VueLoaderPlugin } = require("vue-loader");
@@ -10,7 +11,8 @@ module.exports = {
   entry: {
     index: "./src/index.js",
     background: "./src/background.js",
-    popup: "./src/popup.js"
+    popup: "./src/popup.js",
+    chart: "./src/chart.js"
   },
   watch: IS_DEV_MODE,
   optimization: {
@@ -37,11 +39,15 @@ module.exports = {
     }]
   },
   plugins: [
+    new webpack.DefinePlugin({
+      DOMAIN: JSON.stringify(`https://${IS_DEV_MODE ? "localhost" : "datoris.com"}`)
+    }),
     new CopyPlugin({
       patterns: [
         { from: "src/manifest.json" },
         { from: "src/index.html" },
-        { from: "src/popup.html" }
+        { from: "src/popup.html" },
+        { from: "src/charts", to: "charts" }
       ]
     }),
     new VueLoaderPlugin()

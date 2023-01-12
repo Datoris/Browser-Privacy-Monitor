@@ -84,14 +84,14 @@ export default {
         }));
 
         try {
-          const responseSource = await fetch("https://localhost/source", {
+          const responseSource = await fetch(`${DOMAIN}/source`, {
             method: "POST",
             body: formData
           });
           const jsonSource = await responseSource.json();
           if (jsonSource.response === "success") {
             const source = jsonSource.payload;
-            const responseReport = await fetch("https://localhost/report", {
+            const responseReport = await fetch(`${DOMAIN}/report`, {
               method: "POST",
               body: JSON.stringify({
                 name: Math.random().toString(36).substring(7),
@@ -104,7 +104,7 @@ export default {
             const jsonReport = await responseReport.json();
             if (jsonReport.response === "success") {
               const report = jsonReport.payload;
-              await fetch(`https://localhost/embedded/report/${report.id}`, { method: "POST" });
+              await fetch(`${DOMAIN}/embedded/report/${report.id}`, { method: "POST" });
               await chrome.runtime.sendMessage({ message: "store reports", payload: [report] });
               chrome.tabs.create({ url: "index.html" });
             } else {}

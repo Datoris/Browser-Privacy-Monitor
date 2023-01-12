@@ -1,20 +1,18 @@
 <template>
   <div>
-    <iframe
+    <script
       v-for="report in reports"
       :key="report.id"
-      :src="`https://localhost/embedded/snippet/${report.id}`"
-      :title="report.name"
-      width="600"
-      height="600"
-      frameborder="0"
-    ></iframe>
+      type="application/javascript"
+      src="chart.js"
+      :id="report.id"
+    ></script>
   </div>
 </template>
 
-
 <script>
 export default {
+  DOMAIN: DOMAIN,
   data() {
     return {
       reports: [],
