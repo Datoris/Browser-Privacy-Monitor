@@ -60,6 +60,47 @@ function sourceFieldToReportField ({ field: { aggregate, dataType, id, format, f
   }
 }
 
+async function generateKey() {
+  return window.crypto.subtle.generateKey({
+    name: "AES-GCM",
+    length: 256,
+  }, true, ["encrypt", "decrypt"]);
+}
+
+const iv = window.crypto.getRandomValues(new Uint8Array(12));
+async function encrypt(data, key) {
+  const encoder = new TextEncoder();
+  const encoded = encoder.encode(data);
+  const cipher = await window.crypto.subtle.encrypt({
+    name: "AES-GCM",
+    iv
+  }, key, encoded);
+  return cipher;
+}
+
+async function decrypt(cipher, key, iv) {
+  const decoder = new TextDecoder();
+  const encoded = await window.crypto.subtle.decrypt({
+    name: "AES-GCM",
+    iv: iv,
+  }, key, cipher);
+  return decoder.decode(encoded);
+}
+
+function pack(buffer) {
+  return window.btoa(String.fromCharCode.apply(null, new Uint8Array(buffer)));
+}
+
+function unpack(packed) {
+  const string = window.atob(packed);
+  const buffer = new ArrayBuffer(string.length);
+  const bufferView = new Uint8Array(buffer);
+  for (let i = 0; i < string.length; i++) {
+    bufferView[i] = string.charCodeAt(i);
+  }
+  return buffer;
+}
+
 export default {
   data() {
     return {
@@ -70,7 +111,12 @@ export default {
   methods: {
     async showAllCookies() {
       const { csvFormat } = await import("d3-dsv");
-      const csv = csvFormat(this.allCookies);
+      const key = await generateKey();
+      const encryptedCookies = await Promise.all(this.allCookies.map(async (cookie) => {
+        for (const prop in cookie) cookie[prop] = pack(await encrypt(cookie[prop], key));
+        return cookie;
+      }));
+      const csv = csvFormat(encryptedCookies);
 
       if (csv) {
         const formData = new FormData();
