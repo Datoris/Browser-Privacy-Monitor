@@ -20,6 +20,10 @@ Proposed blueprint, subject to change depending of user feedback, defines follow
 ## Installing
 
 ## Building
+
+Minimum [Node.js](nodejs.org) version: `12.22.12`.  
+Minimum [npm](npmjs.com) version: `6.14.16`.
+
 Install dependencies  
 `npm i`
 
