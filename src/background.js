@@ -1,3 +1,7 @@
+import sortBy from "lodash.sortby";
+
+chrome.action.setBadgeBackgroundColor({ color: "#80cbc4" });
+
 async function getDomain(hostname, tabId) {
   return chrome.scripting.executeScript({
     target: { tabId },
@@ -27,11 +31,10 @@ async function getCookiesSubprocedure(urls, domain) {
   const result = await Promise.all(urls.map(url =>
     new Promise(resolve => chrome.cookies.getAll({ url, domain }, resolve))
   ));
-  return [...new Map([].concat(...result).map(c => [JSON.stringify(c), c])).values()];
+  return sortBy([...new Map([].concat(...result).map(c => [JSON.stringify(c), c])).values()], "domain");
 }
 
 let allCookies, firstPartyCookies, thirdPartyCookies;
-let reports = [];
 
 async function getCookies(tabId, domain) {
   if (domain) {
@@ -71,11 +74,5 @@ chrome.tabs.onUpdated.addListener(async (tabId) => {
 chrome.runtime.onMessage.addListener(({ message, payload }, sender, sendResponse) => {
   if (message === "popup init") {
     sendResponse([allCookies, thirdPartyCookies]);
-  }
-  if (message === "index init") {
-    sendResponse(reports);
-  }
-  if (message === "store reports") {
-    reports = payload;
   }
 });

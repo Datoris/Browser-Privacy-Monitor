@@ -1,25 +1,5 @@
-table {
-  border-collapse: collapse;
-}
+@import "reset";
 
-th {
-  text-align: left;
-}
-
-th,
-td {
-  border: 1px solid #afafaf;
-}
-
-a,
-caption {
-  margin-bottom: .5em;
-}
-
-a {
-  display: block;
-}
-
-caption {
-  text-align: left;
+body {
+  width: 800px;
 }

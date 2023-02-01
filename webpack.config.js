@@ -47,7 +47,11 @@ module.exports = {
         { from: "src/manifest.json" },
         { from: "src/index.html" },
         { from: "src/popup.html" },
-        { from: "src/charts", to: "charts" }
+        { from: "src/charts", to: "charts" },
+        { from: "src/favicon-16x16.png" },
+        { from: "src/favicon-32x32.png" },
+        { from: "src/favicon-48x48.png" },
+        { from: "src/favicon-128x128.png" },
       ]
     }),
     new VueLoaderPlugin()
