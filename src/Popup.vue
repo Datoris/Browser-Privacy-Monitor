@@ -17,7 +17,7 @@
 <script>
 function sourceFieldToReportField ({ field: { aggregate, dataType, id, format, formula, name, sort }, chartColumn }, position) {
   return {
-    aggregate: null,
+    aggregate,
     chartColumn,
     dataType: "TEXT",
     fieldId: id,
@@ -82,7 +82,7 @@ export default {
     };
   },
   async created() {
-    const [allCookies, thirdPartyCookies] = (
+    const cookies = (
       await chrome.runtime.sendMessage({ message: "popup init" })
     );
 
@@ -91,7 +91,7 @@ export default {
 
     window.unpack_decrypt = async (__) => await decrypt(unpack(__), key, iv);
 
-    const encryptedCookies = await Promise.all(allCookies.map(async (cookie) => {
+    const encryptedCookies = await Promise.all(cookies.map(async (cookie) => {
       for (const prop in cookie) cookie[prop] = pack(await encrypt(cookie[prop], key));
       return cookie;
     }));
@@ -116,12 +116,23 @@ export default {
         const jsonSource = await responseSource.json();
         if (jsonSource.response === "success") {
           const source = jsonSource.payload;
+          const sourceFields = source.sourceFields.filter(({ field: { name }}) => ["domain", "name", "thirdParty", "value"].includes(name));
           const responseReport = await fetch(`${DOMAIN}/report`, {
             method: "POST",
             body: JSON.stringify({
               name: Math.random().toString(36).substring(7),
-              reportFields: source.sourceFields.map((sourceField, i) =>
-                sourceFieldToReportField(Object.assign({}, sourceField, { chartColumn: JSON.stringify({ table: `column_${i + 1}#0` })}), i)
+              reportOptions: [{
+                optionTypeId: 1,
+                optionValue: "sunburst"
+              }],
+              reportFields: sourceFields.map((sourceField, i) =>
+                sourceFieldToReportField(Object.assign({}, sourceField, { chartColumn: JSON.stringify({
+                  sunburst: sourceField.field.name === "value" ? "angles" : `slices_${{
+                    thirdParty: 1,
+                    domain: 2,
+                    name: 3
+                  }[sourceField.field.name]}#0`
+                })}), i)
               ),
               sourceId: source.id
             })
