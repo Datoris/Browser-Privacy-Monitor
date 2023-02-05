@@ -1,5 +1,6 @@
 # **Browser Privacy Monitor**
 Reveals data websites keep about you.  
+  
 It bridges Web2 and Web3 by making companies accountable about the information they collect about their users.  
 Web3 refers to a loose set of rules about the internet of the future, in which users own and control their personal data. Web2 paradigm is what prevails today, where companies running websites have almost no responsibility about what they gather about their customers and do with that data.  
 Some changes in the right direction have been implemented, or are planned for the near future.  
