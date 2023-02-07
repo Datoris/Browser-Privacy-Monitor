@@ -1,3 +1,5 @@
+import sortBy from "lodash.sortby";
+
 async function getDomain(hostname, tabId) {
   return chrome.scripting.executeScript({
     target: { tabId },
@@ -27,11 +29,10 @@ async function getCookiesSubprocedure(urls, domain) {
   const result = await Promise.all(urls.map(url =>
     new Promise(resolve => chrome.cookies.getAll({ url, domain }, resolve))
   ));
-  return [...new Map([].concat(...result).map(c => [JSON.stringify(c), c])).values()];
+  return sortBy([...new Map([].concat(...result).map(c => [JSON.stringify(c), c])).values()], "domain");
 }
 
-let allCookies, firstPartyCookies, thirdPartyCookies;
-let reports = [];
+let cookies;
 
 async function getCookies(tabId, domain) {
   if (domain) {
@@ -44,13 +45,15 @@ async function getCookies(tabId, domain) {
     }))[0];
     const urls = result.map(url => url.split(/[#?]/)[0]);
     const uniqueUrls = [...new Set(urls).values()].filter(Boolean);
-    allCookies = await getCookiesSubprocedure(uniqueUrls);
-    firstPartyCookies = await getCookiesSubprocedure(uniqueUrls, domain);
-    thirdPartyCookies = allCookies.filter(({ domain }) => !firstPartyCookies.map(({ domain }) => domain).includes(domain));
-    chrome.action.setBadgeText({ text: `${allCookies.length}` });
+    cookies = await getCookiesSubprocedure(uniqueUrls);
+    const firstPartyCookies = await getCookiesSubprocedure(uniqueUrls, domain);
+    cookies = cookies.map(cookie => Object.assign(cookie, {
+      "Domain type": !firstPartyCookies.map(({ domain }) => domain).includes(cookie.domain) ? "Third-party" : "First-party"
+    }));
+    chrome.action.setBadgeText({ text: `${cookies.length}` });
   } else {
     chrome.action.setBadgeText({ text: "" });
-    allCookies = firstPartyCookies = thirdPartyCookies = undefined;
+    cookies = undefined;
   }
 }
 
@@ -70,12 +73,6 @@ chrome.tabs.onUpdated.addListener(async (tabId) => {
 
 chrome.runtime.onMessage.addListener(({ message, payload }, sender, sendResponse) => {
   if (message === "popup init") {
-    sendResponse([allCookies, thirdPartyCookies]);
-  }
-  if (message === "index init") {
-    sendResponse(reports);
-  }
-  if (message === "store reports") {
-    reports = payload;
+    sendResponse(cookies);
   }
 });
