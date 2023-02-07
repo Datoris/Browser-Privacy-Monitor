@@ -14,6 +14,7 @@ fetch(`${origin}/embedded/report/${initScript.id}`)
     embedScript.onload = function () { this.remove(); }
     embedScript.$origin = origin;
     embedScript.$report = report;
+    embedScript.$fn = initScript.getAttribute("fn");
     embedScript.src = `charts/datoris_${visualizationType}.js`;
     embedScript.type ="application/javascript";
     root.parentNode.insertBefore(embedScript, root.nextElementSibling);
