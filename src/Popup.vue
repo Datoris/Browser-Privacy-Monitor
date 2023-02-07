@@ -36,7 +36,11 @@ async function generateKey() {
   }, true, ["encrypt", "decrypt"]);
 }
 
+
+// initialization vector for encryption
 const iv = window.crypto.getRandomValues(new Uint8Array(12));
+
+// encryption function using AES specification with Galois/Counter Mode
 async function encrypt(data, key) {
   const encoder = new TextEncoder();
   const encoded = encoder.encode(data);
@@ -61,6 +65,7 @@ async function decrypt(cipher, key, iv) {
   return "";
 }
 
+// packing function for transforming the ArrayBuffer type ciphertext returned by encryption into base64 string
 function pack(buffer) {
   return window.btoa(String.fromCharCode.apply(null, new Uint8Array(buffer)));
 }
@@ -89,6 +94,7 @@ export default {
     const { csvFormat } = await import("d3-dsv");
     const key = await generateKey();
 
+    // global transform function which we supply for embedded charts
     window.unpack_decrypt = async (__) => await decrypt(unpack(__), key, iv);
 
     const encryptedCookies = await Promise.all(cookies.map(async (cookie) => {
@@ -98,6 +104,7 @@ export default {
     const csv = csvFormat(encryptedCookies);
 
     if (csv) {
+      // new source form required fields
       const formData = new FormData();
       formData.append("name", `extension_browser-privacy-monitor_${Math.random().toString(36).substring(7)}`);
       formData.append("baseName", "CsvFile");
@@ -109,34 +116,53 @@ export default {
       }));
 
       try {
+        // POST new source with form data as body
         const responseSource = await fetch(`${DOMAIN}/source`, {
           method: "POST",
           body: formData
         });
+
         const jsonSource = await responseSource.json();
         if (jsonSource.response === "success") {
           const source = jsonSource.payload;
-          const sourceFields = source.sourceFields.filter(({ field: { name }}) => ["domain", "name", "thirdParty", "value"].includes(name));
+
+          // POST new report
           const responseReport = await fetch(`${DOMAIN}/report`, {
             method: "POST",
             body: JSON.stringify({
               name: Math.random().toString(36).substring(7),
+
+              // report/chart options
               reportOptions: [{
+                // visualization type
                 optionTypeId: 1,
                 optionValue: "sunburst"
+              }, {
+                // page size
+                optionTypeId: 9,
+                optionValue: cookies.length
               }],
-              reportFields: sourceFields.map((sourceField, i) =>
-                sourceFieldToReportField(Object.assign({}, sourceField, { chartColumn: JSON.stringify({
-                  sunburst: sourceField.field.name === "value" ? "angles" : `slices_${{
-                    thirdParty: 1,
-                    domain: 2,
-                    name: 3
-                  }[sourceField.field.name]}#0`
-                })}), i)
-              ),
+
+              // report fields
+              reportFields: source.sourceFields
+                .filter(({ field: { name } }) => ["Domain type", "domain", "name", "value"].includes(name))
+                .map((sourceField, i) =>
+                  sourceFieldToReportField(Object.assign({}, sourceField, {
+                    chartColumn: JSON.stringify({
+                      // chart roles
+                      sunburst: sourceField.field.name === "value" ? "angles" : `slices_${{
+                        "Domain type": 1,
+                        domain: 2,
+                        name: 3
+                      }[sourceField.field.name]}#0`
+                    })
+                  }), i)
+                ),
+
               sourceId: source.id
             })
           });
+
           const jsonReport = await responseReport.json();
           if (jsonReport.response === "success") {
             const report = jsonReport.payload;

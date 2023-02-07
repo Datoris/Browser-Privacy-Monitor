@@ -47,7 +47,9 @@ async function getCookies(tabId, domain) {
     const uniqueUrls = [...new Set(urls).values()].filter(Boolean);
     cookies = await getCookiesSubprocedure(uniqueUrls);
     const firstPartyCookies = await getCookiesSubprocedure(uniqueUrls, domain);
-    cookies = cookies.map(cookie => Object.assign(cookie, { thirdParty: !firstPartyCookies.map(({ domain }) => domain).includes(cookie.domain) }));
+    cookies = cookies.map(cookie => Object.assign(cookie, {
+      "Domain type": !firstPartyCookies.map(({ domain }) => domain).includes(cookie.domain) ? "Third-party" : "First-party"
+    }));
     chrome.action.setBadgeText({ text: `${cookies.length}` });
   } else {
     chrome.action.setBadgeText({ text: "" });
