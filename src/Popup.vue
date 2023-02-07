@@ -40,7 +40,7 @@ async function generateKey() {
 // initialization vector for encryption
 const iv = window.crypto.getRandomValues(new Uint8Array(12));
 
-// encryption function using AES specification with Galois/Counter Mode
+// encryption function using AES specification with Galois/Counter mode
 async function encrypt(data, key) {
   const encoder = new TextEncoder();
   const encoded = encoder.encode(data);
