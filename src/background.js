@@ -1,5 +1,7 @@
 import sortBy from "lodash.sortby";
 
+chrome.action.setBadgeBackgroundColor({ color: "#80cbc4" });
+
 async function getDomain(hostname, tabId) {
   return chrome.scripting.executeScript({
     target: { tabId },
