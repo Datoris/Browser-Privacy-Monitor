@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <div v-if="reports.length">
+  <main>
+    <div v-if="reports.length" id="dashboard">
       <script
         v-for="report in reports"
         :key="report.id"
@@ -10,7 +10,8 @@
         fn="unpack_decrypt"
       ></script>
     </div>
-  </div>
+    <div v-else id="message">Collecting cookies...</div>
+  </main>
 </template>
 
 
@@ -19,9 +20,9 @@ function sourceFieldToReportField ({ field: { aggregate, dataType, id, format, f
   return {
     aggregate,
     chartColumn,
-    dataType: "TEXT",
+    dataType,
     fieldId: id,
-    format: null,
+    format,
     formula,
     name,
     position,
@@ -87,9 +88,7 @@ export default {
     };
   },
   async created() {
-    const cookies = (
-      await chrome.runtime.sendMessage({ message: "popup init" })
-    );
+    const cookies = await chrome.runtime.sendMessage({ message: "popup init" });
 
     const { csvFormat } = await import("d3-dsv");
     const key = await generateKey();
@@ -126,6 +125,29 @@ export default {
         if (jsonSource.response === "success") {
           const source = jsonSource.payload;
 
+          const sourceFields = {
+            "Domain type": {
+              chartColumn: { sunburst: "slices_1#0" },
+              position: 0
+            },
+            domain: {
+              chartColumn: { sunburst: "slices_2#0" },
+              position: 1
+            },
+            name: {
+              chartColumn: { sunburst: "slices_3#0" },
+              position: 2
+            },
+            value: {
+              chartColumn: { sunburst: "angles" },
+              field: {
+                aggregate: "count",
+                name: "Number of cookies"
+              },
+              position: 3
+            }
+          }
+
           // POST new report
           const responseReport = await fetch(`${DOMAIN}/report`, {
             method: "POST",
@@ -138,25 +160,35 @@ export default {
                 optionTypeId: 1,
                 optionValue: "sunburst"
               }, {
+                // footer enabled
+                optionTypeId: 3,
+                optionValue: true
+              }, {
+                // footer
+                optionTypeId: 8,
+                optionValue: "Powered by <a href='https://datoris.com' target='_blank'>Datoris.com</a>"
+              }, {
                 // page size
                 optionTypeId: 9,
-                optionValue: cookies.length
+                optionValue: 1000
+              }, {
+                // paging enabled
+                optionTypeId: 17,
+                optionValue: false
+              }, {
+                // title
+                optionTypeId: 19,
+                optionValue: "Browser cookies by domain"
               }],
 
               // report fields
               reportFields: source.sourceFields
-                .filter(({ field: { name } }) => ["Domain type", "domain", "name", "value"].includes(name))
-                .map((sourceField, i) =>
+                .filter(({ field: { name } }) => Object.keys(sourceFields).includes(name))
+                .map((sourceField) =>
                   sourceFieldToReportField(Object.assign({}, sourceField, {
-                    chartColumn: JSON.stringify({
-                      // chart roles
-                      sunburst: sourceField.field.name === "value" ? "angles" : `slices_${{
-                        "Domain type": 1,
-                        domain: 2,
-                        name: 3
-                      }[sourceField.field.name]}#0`
-                    })
-                  }), i)
+                    chartColumn: JSON.stringify(sourceFields[sourceField.field.name].chartColumn),
+                    field: Object.assign({}, sourceField.field, sourceFields[sourceField.field.name].field),
+                  }), sourceFields[sourceField.field.name].position)
                 ),
 
               sourceId: source.id
@@ -172,6 +204,6 @@ export default {
         } else {}
       } catch (err) { return Promise.reject(new Error(err)); }
     } else console.log("Blank CSV");
-  },
+  }
 };
 </script>

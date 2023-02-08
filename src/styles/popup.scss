@@ -1,5 +1,37 @@
 @import "reset";
 
 body {
+  height: 600px;
   width: 800px;
+
+  >main {
+    display: flex;
+    height: 100%;
+
+    >#dashboard,
+    >#message {
+      flex-basis: 100%;
+      margin: auto;
+    }
+
+    >#dashboard {
+      height: inherit;
+    }
+
+    >#message {
+      animation: pulse .8s linear infinite;
+      font-family: "Helvetica", sans-serif;
+      text-align: center;
+    }
+  }
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: .5;
+  }
 }
