@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <main>
     <div v-if="reports.length" id="dashboard">
       <script
         v-for="report in reports"
@@ -11,7 +11,7 @@
       ></script>
     </div>
     <div v-else id="message">Collecting cookies...</div>
-  </div>
+  </main>
 </template>
 
 
