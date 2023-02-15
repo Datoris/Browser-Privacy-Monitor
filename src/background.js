@@ -55,7 +55,7 @@ async function getCookies(tabId, domain) {
     chrome.action.setBadgeText({ text: `${cookies.length}` });
   } else {
     chrome.action.setBadgeText({ text: "" });
-    cookies = undefined;
+    cookies = [];
   }
 }
 

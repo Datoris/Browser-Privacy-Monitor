@@ -1,6 +1,7 @@
 <template>
   <main>
-    <div v-if="reports.length" id="dashboard">
+    <div v-if="cookies && !cookies.length" class="message">No cookies here.</div>
+    <div v-else-if="reports.length" id="dashboard">
       <script
         v-for="report in reports"
         :key="report.id"
@@ -10,12 +11,15 @@
         fn="unpack_decrypt"
       ></script>
     </div>
-    <div v-else id="message">Collecting cookies...</div>
+    <div v-else class="message message--pulse">Collecting cookies...</div>
   </main>
 </template>
 
 
 <script>
+
+import { csvFormat } from "d3-dsv";
+
 function sourceFieldToReportField ({ field: { aggregate, dataType, id, format, formula, name, sort }, chartColumn }, position) {
   return {
     aggregate,
@@ -84,19 +88,19 @@ function unpack(packed) {
 export default {
   data() {
     return {
+      cookies: undefined,
       reports: []
     };
   },
   async created() {
-    const cookies = await chrome.runtime.sendMessage({ message: "popup init" });
+    this.cookies = await chrome.runtime.sendMessage({ message: "popup init" });
 
-    const { csvFormat } = await import("d3-dsv");
     const key = await generateKey();
 
     // global transform function which we supply for embedded charts
     window.unpack_decrypt = async (__) => await decrypt(unpack(__), key, iv);
 
-    const encryptedCookies = await Promise.all(cookies.map(async (cookie) => {
+    const encryptedCookies = await Promise.all(this.cookies.map(async (cookie) => {
       for (const prop in cookie) cookie[prop] = pack(await encrypt(cookie[prop], key));
       return cookie;
     }));
