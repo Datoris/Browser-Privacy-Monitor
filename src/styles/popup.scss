@@ -1,15 +1,20 @@
 @import "reset";
 
-body {
+html {
   height: 600px;
-  width: 800px;
+  width: 785px;
+}
+
+body {
+  height: 100%;
+  width: 100%;
 
   >main {
     display: flex;
     height: 100%;
 
     >#dashboard,
-    >#message {
+    >.message {
       flex-basis: 100%;
       margin: auto;
     }
@@ -18,10 +23,13 @@ body {
       height: inherit;
     }
 
-    >#message {
-      animation: pulse .8s linear infinite;
+    >.message {
       font-family: "Helvetica", sans-serif;
       text-align: center;
+
+      &--pulse {
+        animation: pulse .8s linear infinite;
+      }
     }
   }
 }
