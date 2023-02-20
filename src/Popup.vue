@@ -95,6 +95,8 @@ export default {
   async created() {
     this.cookies = await chrome.runtime.sendMessage({ message: "popup init" });
 
+    if (!this.cookies?.length) return;
+
     const key = await generateKey();
 
     // global transform function which we supply for embedded charts
