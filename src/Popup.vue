@@ -92,124 +92,130 @@ export default {
       reports: []
     };
   },
-  async created() {
-    this.cookies = await chrome.runtime.sendMessage({ message: "popup init" });
+  created() {
+    chrome.runtime.sendMessage({ message: "popup init" });
 
-    if (!this.cookies?.length) return;
+    chrome.runtime.onMessage.addListener(async ({ message, payload }) => {
+      if (message === "cookies") {
+        this.cookies = payload;
 
-    const key = await generateKey();
+        if (!this.cookies?.length) return;
 
-    // global transform function which we supply for embedded charts
-    window.unpack_decrypt = async (__) => await decrypt(unpack(__), key, iv);
+        const key = await generateKey();
 
-    const encryptedCookies = await Promise.all(this.cookies.map(async (cookie) => {
-      for (const prop in cookie) cookie[prop] = pack(await encrypt(cookie[prop], key));
-      return cookie;
-    }));
-    const csv = csvFormat(encryptedCookies);
+        // global transform function which we supply for embedded charts
+        window.unpack_decrypt = async (__) => await decrypt(unpack(__), key, iv);
 
-    if (csv) {
-      // new source form required fields
-      const formData = new FormData();
-      formData.append("name", `extension_browser-privacy-monitor_${Math.random().toString(36).substring(7)}`);
-      formData.append("baseName", "CsvFile");
-      formData.append("file", new File([csv], "cookies.csv", { type: "text/csv;charset=utf-8" }));
-      formData.append("sourceSettings", JSON.stringify({
-        "File name": { name: "File name" },
-        "Database table name": { name: "Database table name", sourceSettingValue: "" },
-        "Database URL": { name: "Database URL", sourceSettingValue: "" },
-      }));
+        const encryptedCookies = await Promise.all(this.cookies.map(async (cookie) => {
+          for (const prop in cookie) cookie[prop] = pack(await encrypt(cookie[prop], key));
+          return cookie;
+        }));
+        const csv = csvFormat(encryptedCookies);
 
-      try {
-        // POST new source with form data as body
-        const responseSource = await fetch(`${DOMAIN}/source`, {
-          method: "POST",
-          body: formData
-        });
+        if (csv) {
+          // new source form required fields
+          const formData = new FormData();
+          formData.append("name", `extension_browser-privacy-monitor_${Math.random().toString(36).substring(7)}`);
+          formData.append("baseName", "CsvFile");
+          formData.append("file", new File([csv], "cookies.csv", { type: "text/csv;charset=utf-8" }));
+          formData.append("sourceSettings", JSON.stringify({
+            "File name": { name: "File name" },
+            "Database table name": { name: "Database table name", sourceSettingValue: "" },
+            "Database URL": { name: "Database URL", sourceSettingValue: "" },
+          }));
 
-        const jsonSource = await responseSource.json();
-        if (jsonSource.response === "success") {
-          const source = jsonSource.payload;
+          try {
+            // POST new source with form data as body
+            const responseSource = await fetch(`${DOMAIN}/source`, {
+              method: "POST",
+              body: formData
+            });
 
-          const sourceFields = {
-            "Domain type": {
-              chartColumn: { sunburst: "slices_1#0" },
-              position: 0
-            },
-            domain: {
-              chartColumn: { sunburst: "slices_2#0" },
-              position: 1
-            },
-            name: {
-              chartColumn: { sunburst: "slices_3#0" },
-              position: 2
-            },
-            value: {
-              chartColumn: { sunburst: "angles" },
-              field: {
-                aggregate: "count",
-                name: "Number of cookies"
-              },
-              position: 3
-            }
-          }
+            const jsonSource = await responseSource.json();
+            if (jsonSource.response === "success") {
+              const source = jsonSource.payload;
 
-          // POST new report
-          const responseReport = await fetch(`${DOMAIN}/report`, {
-            method: "POST",
-            body: JSON.stringify({
-              name: Math.random().toString(36).substring(7),
+              const sourceFields = {
+                "Domain type": {
+                  chartColumn: { sunburst: "slices_1#0" },
+                  position: 0
+                },
+                domain: {
+                  chartColumn: { sunburst: "slices_2#0" },
+                  position: 1
+                },
+                name: {
+                  chartColumn: { sunburst: "slices_3#0" },
+                  position: 2
+                },
+                value: {
+                  chartColumn: { sunburst: "angles" },
+                  field: {
+                    aggregate: "count",
+                    name: "Number of cookies"
+                  },
+                  position: 3
+                }
+              }
 
-              // report/chart options
-              reportOptions: [{
-                // visualization type
-                optionTypeId: 1,
-                optionValue: "sunburst"
-              }, {
-                // footer enabled
-                optionTypeId: 3,
-                optionValue: true
-              }, {
-                // footer
-                optionTypeId: 8,
-                optionValue: "Powered by <a href='https://datoris.com' target='_blank'>Datoris.com</a>"
-              }, {
-                // page size
-                optionTypeId: 9,
-                optionValue: 1000
-              }, {
-                // paging enabled
-                optionTypeId: 17,
-                optionValue: false
-              }, {
-                // title
-                optionTypeId: 19,
-                optionValue: "Browser cookies by domain"
-              }],
+              // POST new report
+              const responseReport = await fetch(`${DOMAIN}/report`, {
+                method: "POST",
+                body: JSON.stringify({
+                  name: Math.random().toString(36).substring(7),
 
-              // report fields
-              reportFields: source.sourceFields
-                .filter(({ field: { name } }) => Object.keys(sourceFields).includes(name))
-                .map((sourceField) =>
-                  sourceFieldToReportField(Object.assign({}, sourceField, {
-                    chartColumn: JSON.stringify(sourceFields[sourceField.field.name].chartColumn),
-                    field: Object.assign({}, sourceField.field, sourceFields[sourceField.field.name].field),
-                  }), sourceFields[sourceField.field.name].position)
-                ),
+                  // report/chart options
+                  reportOptions: [{
+                    // visualization type
+                    optionTypeId: 1,
+                    optionValue: "sunburst"
+                  }, {
+                    // footer enabled
+                    optionTypeId: 3,
+                    optionValue: true
+                  }, {
+                    // footer
+                    optionTypeId: 8,
+                    optionValue: "Powered by <a href='https://datoris.com' target='_blank'>Datoris.com</a>"
+                  }, {
+                    // page size
+                    optionTypeId: 9,
+                    optionValue: 1000
+                  }, {
+                    // paging enabled
+                    optionTypeId: 17,
+                    optionValue: false
+                  }, {
+                    // title
+                    optionTypeId: 19,
+                    optionValue: "Browser cookies by domain"
+                  }],
 
-              sourceId: source.id
-            })
-          });
+                  // report fields
+                  reportFields: source.sourceFields
+                    .filter(({ field: { name } }) => Object.keys(sourceFields).includes(name))
+                    .map((sourceField) =>
+                      sourceFieldToReportField(Object.assign({}, sourceField, {
+                        chartColumn: JSON.stringify(sourceFields[sourceField.field.name].chartColumn),
+                        field: Object.assign({}, sourceField.field, sourceFields[sourceField.field.name].field),
+                      }), sourceFields[sourceField.field.name].position)
+                    ),
 
-          const jsonReport = await responseReport.json();
-          if (jsonReport.response === "success") {
-            const report = jsonReport.payload;
-            await fetch(`${DOMAIN}/embedded/report/${report.id}`, { method: "POST" });
-            this.reports = [report];
-          } else {}
-        } else {}
-      } catch (err) { return Promise.reject(new Error(err)); }
-    } else console.log("Blank CSV");
+                  sourceId: source.id
+                })
+              });
+
+              const jsonReport = await responseReport.json();
+              if (jsonReport.response === "success") {
+                const report = jsonReport.payload;
+                await fetch(`${DOMAIN}/embedded/report/${report.id}`, { method: "POST" });
+                this.reports = [report];
+              } else {}
+            } else {}
+          } catch (err) { return Promise.reject(new Error(err)); }
+        } else console.log("Blank CSV");
+      }
+    });
   }
 };
 </script>

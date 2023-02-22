@@ -22,9 +22,13 @@ async function getDomain(hostname, tabId) {
 }
 
 async function getCurrentTab() {
-  const [currentTab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-  const domain = currentTab?.url && (await getDomain(new URL(currentTab.url).hostname, currentTab.id))[0].result;
-  return [currentTab?.id, domain];
+  try {
+    const [currentTab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    const domain = currentTab?.url && (await getDomain(new URL(currentTab.url).hostname, currentTab.id))[0].result;
+    return [currentTab?.id, domain];
+  } catch {
+    return new Promise((resolve) => setTimeout(() => resolve(getCurrentTab())));
+  }
 }
 
 async function getCookiesSubprocedure(urls, domain) {
@@ -73,8 +77,8 @@ chrome.tabs.onUpdated.addListener(async (tabId) => {
 });
 
 
-chrome.runtime.onMessage.addListener(({ message, payload }, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener(({ message, payload }) => {
   if (message === "popup init") {
-    sendResponse(cookies);
+    chrome.runtime.sendMessage({ message: "cookies", payload: cookies });
   }
 });
