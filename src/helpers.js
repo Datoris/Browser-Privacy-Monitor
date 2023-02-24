@@ -1,5 +1,7 @@
 function _d(__) { console.log(__); return __; }
 
+// converts the source fields into report fields
+// to create a valid request body for the POST request to /report
 function sourceFieldToReportField ({ field: { aggregate, dataType, id, format, formula, name, sort }, chartColumn }, position) {
   return {
     aggregate,
