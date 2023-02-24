@@ -106,9 +106,11 @@ export default {
         // global transform function which we supply for embedded charts
         window.unpack_decrypt = async (__) => await decrypt(unpack(__), key, iv);
 
+        const cookieAttributesToOmit = ["value"];
+
         const encryptedCookies = await Promise.all(this.cookies.map(async (cookie) => {
           for (const prop in cookie) {
-            if (prop === "value") delete cookie[prop];
+            if (cookieAttributesToOmit.includes(prop)) delete cookie[prop];
             else cookie[prop] = pack(await encrypt(cookie[prop], key));
           }
           return cookie;
