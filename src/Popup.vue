@@ -103,7 +103,10 @@ export default {
     window.unpack_decrypt = async (__) => await decrypt(unpack(__), key, iv);
 
     const encryptedCookies = await Promise.all(this.cookies.map(async (cookie) => {
-      for (const prop in cookie) cookie[prop] = pack(await encrypt(cookie[prop], key));
+      for (const prop in cookie) {
+        if (prop === "value") delete cookie[prop];
+        else cookie[prop] = pack(await encrypt(cookie[prop], key));
+      }
       return cookie;
     }));
     const csv = csvFormat(encryptedCookies);
@@ -132,6 +135,14 @@ export default {
           const source = jsonSource.payload;
 
           const sourceFields = {
+            id: {
+              chartColumn: { sunburst: "angles" },
+              position: 3,
+              field: {
+                aggregate: "count",
+                name: "Number of cookies"
+              }
+            },
             "Domain type": {
               chartColumn: { sunburst: "slices_1#0" },
               position: 0
@@ -143,14 +154,6 @@ export default {
             name: {
               chartColumn: { sunburst: "slices_3#0" },
               position: 2
-            },
-            value: {
-              chartColumn: { sunburst: "angles" },
-              field: {
-                aggregate: "count",
-                name: "Number of cookies"
-              },
-              position: 3
             }
           }
 

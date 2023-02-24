@@ -50,6 +50,7 @@ async function getCookies(tabId, domain) {
     cookies = await getCookiesSubprocedure(uniqueUrls);
     const firstPartyCookies = await getCookiesSubprocedure(uniqueUrls, domain);
     cookies = cookies.map(cookie => Object.assign(cookie, {
+      "id": `${cookie.domain}_${cookie.name}`,
       "Domain type": !firstPartyCookies.map(({ domain }) => domain).includes(cookie.domain) ? "Third-party" : "First-party"
     }));
     chrome.action.setBadgeText({ text: `${cookies.length}` });
