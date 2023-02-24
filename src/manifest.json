@@ -1,7 +1,7 @@
 {
   "name": "Browser Privacy Monitor",
   "description": "Extension reveals cookies current tab stores in your browser. Expanded view shows interactive chart with cookies split by origin.",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "manifest_version": 3,
   "background": {
     "service_worker": "background.js"
