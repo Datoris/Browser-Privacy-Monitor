@@ -18,72 +18,16 @@
 
 <script>
 
+import {
+  sourceFieldToReportField,
+  iv,
+  encrypt,
+  decrypt,
+  pack,
+  unpack,
+  generateKey,
+} from "./helpers";
 import { csvFormat } from "d3-dsv";
-
-function sourceFieldToReportField ({ field: { aggregate, dataType, id, format, formula, name, sort }, chartColumn }, position) {
-  return {
-    aggregate,
-    chartColumn,
-    dataType,
-    fieldId: id,
-    format,
-    formula,
-    name,
-    position,
-    sort
-  }
-}
-
-async function generateKey() {
-  return window.crypto.subtle.generateKey({
-    name: "AES-GCM",
-    length: 256,
-  }, true, ["encrypt", "decrypt"]);
-}
-
-
-// initialization vector for encryption
-const iv = window.crypto.getRandomValues(new Uint8Array(12));
-
-// encryption function using AES specification with Galois/Counter mode
-async function encrypt(data, key) {
-  const encoder = new TextEncoder();
-  const encoded = encoder.encode(data);
-  const cipher = await window.crypto.subtle.encrypt({
-    name: "AES-GCM",
-    iv
-  }, key, encoded);
-  return cipher;
-}
-
-async function decrypt(cipher, key, iv) {
-  if (cipher.byteLength) {
-    const decoder = new TextDecoder();
-    try {
-      const encoded = await window.crypto.subtle.decrypt({
-        name: "AES-GCM",
-        iv: iv,
-      }, key, cipher);
-      return decoder.decode(encoded);
-    } catch (err) {};
-  }
-  return "";
-}
-
-// packing function for transforming the ArrayBuffer type ciphertext returned by encryption into base64 string
-function pack(buffer) {
-  return window.btoa(String.fromCharCode.apply(null, new Uint8Array(buffer)));
-}
-
-function unpack(packed) {
-  const string = window.atob(packed);
-  const buffer = new ArrayBuffer(string.length);
-  const bufferView = new Uint8Array(buffer);
-  for (let i = 0; i < string.length; i++) {
-    bufferView[i] = string.charCodeAt(i);
-  }
-  return buffer;
-}
 
 export default {
   data() {
@@ -134,7 +78,9 @@ export default {
         if (jsonSource.response === "success") {
           const source = jsonSource.payload;
 
-          const sourceFields = {
+          // this variable contains arguments for sourceFieldToReportField()
+          // for each source field we want to include in our report
+          const relevantSourceFieldsAddenda = {
             id: {
               chartColumn: { sunburst: "angles" },
               position: 3,
@@ -192,12 +138,12 @@ export default {
 
               // report fields
               reportFields: source.sourceFields
-                .filter(({ field: { name } }) => Object.keys(sourceFields).includes(name))
+                .filter(({ field: { name } }) => Object.keys(relevantSourceFieldsAddenda).includes(name))
                 .map((sourceField) =>
                   sourceFieldToReportField(Object.assign({}, sourceField, {
-                    chartColumn: JSON.stringify(sourceFields[sourceField.field.name].chartColumn),
-                    field: Object.assign({}, sourceField.field, sourceFields[sourceField.field.name].field),
-                  }), sourceFields[sourceField.field.name].position)
+                    chartColumn: JSON.stringify(relevantSourceFieldsAddenda[sourceField.field.name].chartColumn),
+                    field: Object.assign({}, sourceField.field, relevantSourceFieldsAddenda[sourceField.field.name].field),
+                  }), relevantSourceFieldsAddenda[sourceField.field.name].position)
                 ),
 
               sourceId: source.id
@@ -215,4 +161,5 @@ export default {
     } else console.log("Blank CSV");
   }
 };
+
 </script>
