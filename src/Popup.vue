@@ -78,7 +78,7 @@ export default {
         if (jsonSource.response === "success") {
           const source = jsonSource.payload;
 
-          // this variable includes arguments for the sourceFieldToReportField() function
+          // this variable contains arguments for the sourceFieldToReportField() function
           // specifying each source field to be included in the report
           const relevantSourceFieldsAddenda = {
             id: {
