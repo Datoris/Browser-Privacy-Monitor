@@ -1,21 +1,3 @@
-function _d(__) { console.log(__); return __; }
-
-// converts the source fields into report fields
-// to create a valid request body for the POST request to /report
-function sourceFieldToReportField ({ field: { aggregate, dataType, id, format, formula, name, sort }, chartColumn }, position) {
-  return {
-    aggregate,
-    chartColumn,
-    dataType,
-    fieldId: id,
-    format,
-    formula,
-    name,
-    position,
-    sort
-  }
-}
-
 const initializationVector = window.crypto.getRandomValues(new Uint8Array(12));
 
 // encryption function using AES specification with Galois/Counter mode
@@ -24,7 +6,7 @@ async function encrypt(data, key) {
   const encoded = encoder.encode(data);
   const cipher = await window.crypto.subtle.encrypt({
     name: "AES-GCM",
-    initializationVector
+    iv: initializationVector
   }, key, encoded);
   return cipher;
 }
@@ -35,7 +17,7 @@ async function decrypt(cipher, key, initializationVector) {
     try {
       const encoded = await window.crypto.subtle.decrypt({
         name: "AES-GCM",
-        initializationVector: initializationVector,
+        iv: initializationVector,
       }, key, cipher);
       return decoder.decode(encoded);
     } catch (err) {};
@@ -66,8 +48,6 @@ async function generateKey() {
 }
 
 export {
-  _d,
-  sourceFieldToReportField,
   initializationVector,
   encrypt,
   decrypt,

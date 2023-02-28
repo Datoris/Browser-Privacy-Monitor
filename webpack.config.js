@@ -42,9 +42,6 @@ module.exports = {
     new webpack.DefinePlugin({
       DOMAIN: JSON.stringify(`https://${IS_DEV_MODE ? "localhost" : "datoris.com"}`)
     }),
-    new webpack.ProvidePlugin({
-      _d: [__dirname + "/src/helpers.js", "_d"]
-    }),
     new CopyPlugin({
       patterns: [
         { from: "src/manifest.json" },

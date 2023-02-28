@@ -18,15 +18,15 @@
 
 <script>
 
+import { sourceFieldToReportField } from "./lib/reporting";
 import {
-  sourceFieldToReportField,
   initializationVector,
   encrypt,
   decrypt,
   pack,
   unpack,
   generateKey,
-} from "./helper_functions";
+} from "./lib/cryptography";
 import { csvFormat } from "d3-dsv";
 
 export default {
