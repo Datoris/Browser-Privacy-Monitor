@@ -51,20 +51,31 @@ export default {
         window.unpack_decrypt = async (__) => await decrypt(unpack(__), key, initializationVector);
 
         const encryptedCookies = await Promise.all(this.cookies.map(async (cookie) => {
-          for (const prop in cookie) {
-            if (prop === "value") delete cookie[prop];
-            else cookie[prop] = pack(await encrypt(cookie[prop], key));
-          }
-          return cookie;
+            const sourceFields = {
+                domain: pack(await encrypt(cookie.domain, key)),
+                //expirationDate: cookie.expirationDate,
+                //hostOnly: cookie.hostOnly,
+                //httpOnly: cookie.httpOnly,
+                name: pack(await encrypt(cookie.name, key)),
+                //sessionId: cookie.sessionId,
+                //path: cookie.path,
+                //sameSite: cookie.sameSite,
+                //secure: cookie.secure,
+                //session: cookie.session,
+                //storeId: cookie.storeId,
+                //value: cookie.value,
+                domainType: pack(await encrypt(cookie.domainType, key))
+            };
+            return sourceFields;
         }));
-        const csv = csvFormat(encryptedCookies);
+        const sourceCsv = csvFormat(encryptedCookies);
 
-        if (csv) {
+        if (sourceCsv) {
           // new source form required fields
           const formData = new FormData();
           formData.append("name", `extension_browser-privacy-monitor_${Math.random().toString(36).substring(7)}`);
           formData.append("baseName", "CsvFile");
-          formData.append("file", new File([csv], "cookies.csv", { type: "text/csv;charset=utf-8" }));
+          formData.append("file", new File([sourceCsv], "cookies.csv", { type: "text/csv;charset=utf-8" }));
           formData.append("sourceSettings", JSON.stringify({
             "File name": { name: "File name" },
             "Database table name": { name: "Database table name", sourceSettingValue: "" },
@@ -81,32 +92,6 @@ export default {
             const jsonSource = await responseSource.json();
             if (jsonSource.response === "success") {
               const source = jsonSource.payload;
-
-              // contains arguments for the sourceFieldToReportField() function
-              // specifying each source field to be included in the report
-              const selectedSourceFields = {
-                id: {
-                  chartColumn: { sunburst: "angles" },
-                  position: 3,
-                  field: {
-                    aggregate: "count",
-                    name: "Number of cookies"
-                  }
-                },
-                "Domain type": {
-                  chartColumn: { sunburst: "slices_1#0" },
-                  position: 0
-                },
-                domain: {
-                  chartColumn: { sunburst: "slices_2#0" },
-                  position: 1
-                },
-                name: {
-                  chartColumn: { sunburst: "slices_3#0" },
-                  position: 2
-                }
-              }
-
               // POST new report
               const responseReport = await fetch(`${DOMAIN}/report`, {
                 method: "POST",
@@ -139,17 +124,12 @@ export default {
                     optionTypeId: 19,
                     optionValue: "Browser cookies by domain"
                   }],
-
-                  // report fields
-                  reportFields: source.sourceFields
-                    .filter(({ field: { name } }) => Object.keys(selectedSourceFields).includes(name))
-                    .map((sourceField) =>
-                      sourceFieldToReportField(Object.assign({}, sourceField, {
-                        chartColumn: JSON.stringify(selectedSourceFields[sourceField.field.name].chartColumn),
-                        field: Object.assign({}, sourceField.field, selectedSourceFields[sourceField.field.name].field),
-                      }), selectedSourceFields[sourceField.field.name].position)
-                    ),
-
+                  "reportFields":[
+                      {"aggregate":"groupBy","chartColumn":"{\"sunburst\":\"slices_1#0\"}","dataType":"TEXT","fieldId":source.sourceFields[0].fieldId,"format":null,"formula":"\"domainType\"","name":"Domain type","position":0,"sort":null},
+                      {"aggregate":"groupBy","chartColumn":"{\"sunburst\":\"slices_2#0\"}","dataType":"TEXT","fieldId":source.sourceFields[0].fieldId,"format":null,"formula":"\"domain\"","name":"domain","position":1,"sort":null},
+                      {"aggregate":"groupBy","chartColumn":"{\"sunburst\":\"slices_3#0\"}","dataType":"TEXT","fieldId":source.sourceFields[0].fieldId,"format":null,"formula":"\"name\"","name":"name","position":2,"sort":null},
+                      {"aggregate":"count","chartColumn":"{\"sunburst\":\"angles\"}","dataType":"TEXT","fieldId":source.sourceFields[0].fieldId,"format":null,"formula":"\"domain\"||\"name\"","name":"Number of cookies","position":3,"sort":null}
+                  ],
                   sourceId: source.id
                 })
               });

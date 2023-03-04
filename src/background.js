@@ -1,4 +1,4 @@
-import { getCurrentTab } from "./lib/util";
+import { getCurrentTab } from "./lib/browser";
 import { getCookies } from "./lib/cookies";
 
 chrome.action.setBadgeBackgroundColor({ color: "#80cbc4" });
